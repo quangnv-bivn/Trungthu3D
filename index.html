@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Đêm Trăng Trung Thu 3D | Gửi Lời Yêu Thương</title>
+    <meta name="description" content="Khám phá không gian 3D đêm rằm Trung Thu lung linh với trăng tròn, cây đào tiên, thỏ ngọc và những lồng đèn mang theo lời chúc ý nghĩa.">
+    
+    <!-- Open Graph / Facebook / Zalo / Messenger -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Đêm Trăng Trung Thu 3D - Món Quà Trao Gửi Yêu Thương">
+    <meta property="og:description" content="Chạm vào lồng đèn để thắp sáng đêm trăng và khám phá lời chúc cùng album ảnh kỷ niệm!">
+    <meta property="og:image" content="./assets/hh/1.jpeg">
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏮</text></svg>">
+
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body,
+        html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #030208;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        #webgl-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* TOP BAR & BUTTONS */
+        .top-bar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #ffd700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .icon-btn:hover {
+            background: rgba(255, 215, 0, 0.25);
+            color: #fff;
+            transform: scale(1.08);
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+
+        .icon-btn:active {
+            transform: scale(0.92);
+        }
+
+        .icon-btn.playing {
+            color: #ff85a2;
+            border-color: rgba(255, 133, 162, 0.6);
+            box-shadow: 0 0 16px rgba(255, 133, 162, 0.5);
+            animation: pulsePlay 2s infinite ease-in-out;
+        }
+
+        .icon-btn.playing i {
+            display: inline-block;
+            animation: spinVinyl 2.8s linear infinite;
+        }
+
+        @keyframes spinVinyl {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .floating-note {
+            position: absolute;
+            color: #ffd700;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 15;
+            animation: floatNote 2s ease-out forwards;
+        }
+
+        @keyframes floatNote {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) scale(0.7);
+            }
+            50% {
+                opacity: 0.9;
+                transform: translate(-18px, -28px) scale(1.2) rotate(15deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-36px, -55px) scale(1) rotate(-15deg);
+            }
+        }
+
+        @keyframes pulsePlay {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.08);
+            }
+        }
+
+        /* LOADING SCREEN */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 40%, #1a0f2e 0%, #060312 70%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .loading-screen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loader-content {
+            text-align: center;
+            color: #ffd700;
+            padding: 20px;
+        }
+
+        .moon-icon {
+            font-size: 58px;
+            margin-bottom: 16px;
+            display: inline-block;
+            animation: moonPulse 2.2s infinite ease-in-out;
+            filter: drop-shadow(0 0 25px rgba(255, 230, 160, 0.8));
+        }
+
+        @keyframes moonPulse {
+            0%, 100% {
+                transform: scale(0.92);
+            }
+            50% {
+                transform: scale(1.08);
+            }
+        }
+
+        .loader-text {
+            font-family: 'Dancing Script', cursive;
+            font-size: 28px;
+            letter-spacing: 1px;
+            margin-bottom: 22px;
+            color: #ffd700;
+            text-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+        }
+
+        .loader-bar {
+            width: 180px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin: 0 auto;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loader-progress {
+            width: 45%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff758c, #ffd700);
+            border-radius: 10px;
+            position: absolute;
+            animation: loadingProgress 1.6s infinite ease-in-out;
+        }
+
+        @keyframes loadingProgress {
+            0% { left: -45%; }
+            100% { left: 100%; }
+        }
+
+        /* TOAST NOTIFICATION */
+        .toast {
+            position: fixed;
+            top: 78px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(25, 12, 38, 0.94);
+            border: 1.5px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            color: #ffd700;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* WISH MODAL */
+        .wish-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            padding: 20px;
+        }
+
+        .wish-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .wish-card {
+            background: linear-gradient(135deg, rgba(35, 15, 45, 0.95), rgba(15, 8, 25, 0.98));
+            border: 1.5px solid rgba(255, 215, 0, 0.5);
+            box-shadow: 0 0 35px rgba(255, 182, 193, 0.3), inset 0 0 15px rgba(255, 215, 0, 0.2);
+            border-radius: 24px;
+            padding: 26px 22px 20px 22px;
+            max-width: 430px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            transform: translateY(30px) scale(0.9);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: #fff;
+            max-height: 90vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 215, 0, 0.3) transparent;
+        }
+
+        .wish-card::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .wish-card::-webkit-scrollbar-thumb {
+            background: rgba(255, 215, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .wish-modal.active .wish-card {
+            transform: translateY(0) scale(1);
+        }
+
+        .wish-card .close-btn {
+            z-index: 20;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            border: none;
+            color: #ffb7c5;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+
+        .wish-card .close-btn:hover {
+            background: rgba(255, 182, 193, 0.4);
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .wish-card h3 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 30px;
+            color: #ffd700;
+            margin-bottom: 14px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            padding: 0 35px;
+        }
+
+        /* IMAGE CONTAINER & CAROUSEL NAVIGATION */
+        .wish-image-container {
+            width: 100%;
+            height: 280px;
+            max-height: 42vh;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            position: relative;
+            background: rgba(10, 5, 20, 0.7);
+            border: 1.5px solid rgba(255, 215, 0, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6), 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .wish-image-blur {
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            width: calc(100% + 40px);
+            height: calc(100% + 40px);
+            object-fit: cover;
+            filter: blur(18px) brightness(0.42) saturate(1.2);
+            transform: scale(1.15);
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.85;
+            transition: opacity 0.4s ease;
+        }
+
+        .wish-image {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            border-radius: 12px;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .wish-image.fade-transition {
+            opacity: 0.3;
+            transform: scale(0.96);
+        }
+
+        /* CAROUSEL BUTTONS & COUNTER */
+        .wish-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(20, 10, 30, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 215, 0, 0.45);
+            color: #ffd700;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .wish-nav-btn:hover {
+            background: rgba(255, 215, 0, 0.3);
+            color: #fff;
+            transform: translateY(-50%) scale(1.12);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .wish-nav-btn:active {
+            transform: translateY(-50%) scale(0.92);
+        }
+
+        .prev-btn {
+            left: 10px;
+        }
+
+        .next-btn {
+            right: 10px;
+        }
+
+        .wish-counter {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 8, 25, 0.75);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 215, 0, 0.35);
+            border-radius: 20px;
+            padding: 3px 12px;
+            font-size: 11px;
+            color: #ffd700;
+            font-weight: 700;
+            letter-spacing: 1px;
+            z-index: 10;
+            pointer-events: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        /* TEXT & FOOTER */
+        .wish-text-wrapper {
+            min-height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            padding: 0 8px;
+        }
+
+        .wish-card p {
+            font-size: 15.5px;
+            line-height: 1.6;
+            color: #f3e8ff;
+            font-style: italic;
+            transition: opacity 0.3s ease;
+        }
+
+        .typewriter-cursor {
+            display: inline-block;
+            color: #ffd700;
+            font-weight: 300;
+            margin-left: 2px;
+            animation: blinkCursor 0.7s infinite;
+        }
+
+        @keyframes blinkCursor {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .wish-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 215, 0, 0.18);
+        }
+
+        .wish-card .tag {
+            font-size: 12px;
+            color: #ff9ebb;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        .heart-btn {
+            background: rgba(255, 105, 180, 0.16);
+            border: 1px solid rgba(255, 105, 180, 0.45);
+            color: #ff85a2;
+            padding: 5px 13px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            transition: all 0.25s ease;
+        }
+
+        .heart-btn:hover {
+            background: rgba(255, 105, 180, 0.32);
+            color: #fff;
+            transform: scale(1.06);
+            box-shadow: 0 0 12px rgba(255, 105, 180, 0.4);
+        }
+
+        .heart-btn:active {
+            transform: scale(0.92);
+        }
+
+        .floating-heart {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999;
+            font-size: 24px;
+            animation: floatHeart 1.4s ease-out forwards;
+        }
+
+        @keyframes floatHeart {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(0.8) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-55px) scale(1.3) rotate(15deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-120px) scale(1.6) rotate(-15deg);
+            }
+        }
+
+        .click-hint {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            color: rgba(255, 235, 205, 0.9);
+            font-size: 13px;
+            letter-spacing: 1px;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.85);
+            animation: pulseHint 2s infinite alternate;
+            text-align: center;
+            width: 90%;
+        }
+
+        @keyframes pulseHint {
+            0% { opacity: 0.45; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- LOADING SCREEN -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loader-content">
+            <div class="moon-icon">🌕</div>
+            <div class="loader-text">Đang thắp sáng đêm trăng...</div>
+            <div class="loader-bar"><div class="loader-progress"></div></div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="toast"><i class="fas fa-check-circle"></i> <span>Đã sao chép liên kết thiệp chúc! ✨</span></div>
+
+    <!-- 3D WEBGL CONTAINER -->
+    <div id="webgl-container"></div>
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <button class="icon-btn" id="audio-btn" title="Bật/Tắt Nhạc"><i class="fas fa-music"></i></button>
+        <button class="icon-btn" id="reset-cam-btn" title="Góc nhìn ban đầu"><i class="fas fa-arrows-rotate"></i></button>
+        <button class="icon-btn" id="share-btn" title="Chia sẻ liên kết"><i class="fas fa-share-nodes"></i></button>
+        <button class="icon-btn" id="fullscreen-btn" title="Toàn màn hình"><i class="fas fa-expand"></i></button>
+    </div>
+
+    <div class="click-hint" id="clickHint">🎵 Chạm vào màn hình để thắp nến và bật nhạc 🎵</div>
+
+    <!-- WISH MODAL -->
+    <div class="wish-modal" id="wishModal">
+        <div class="wish-card">
+            <button class="close-btn" id="closeWishBtn" title="Đóng thiệp"><i class="fas fa-times"></i></button>
+            <h3 id="wishTitle">Lời nhắn</h3>
+            
+            <div class="wish-image-container" id="wishImgContainer">
+                <img id="wishImageBlur" class="wish-image-blur" src="" alt="" aria-hidden="true">
+                <img id="wishImage" class="wish-image" src="" alt="Đêm trăng Trung Thu">
+                
+                <!-- Nav buttons & counter -->
+                <button class="wish-nav-btn prev-btn" id="prevWishBtn" title="Câu trước"><i class="fas fa-chevron-left"></i></button>
+                <button class="wish-nav-btn next-btn" id="nextWishBtn" title="Câu tiếp theo"><i class="fas fa-chevron-right"></i></button>
+                <div class="wish-counter" id="wishCounter">1 / 1</div>
+            </div>
+
+            <div class="wish-text-wrapper">
+                <p id="wishText">"Chúc bạn một đêm Trung Thu ấm áp, bình an và trọn vẹn bên những người thương yêu."</p>
+            </div>
+
+            <div class="wish-footer">
+                <div class="tag" id="wishTag">✦ TRUNG THU AN LÀNH ✦</div>
+                <button class="heart-btn" id="wishHeartBtn" title="Thả tim yêu thương">❤️ <span id="heartCount">1</span></button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="bgm" loop playsinline preload="auto" src=""></audio>
+
+    <!-- Three.js & OrbitControls -->
+    <script src="./assets/three.min.js"></script>
+    <script src="./assets/OrbitControls.js"></script>
+    <script src="./assets/script.js"></script>
+</body>
+
+</html>
